@@ -4,7 +4,7 @@ A two-device board game of hidden mazes, played over voice, with a hash that kee
 
 Inspired by the Labyrinth game from the manga *Usogui*.
 
-**[▶ Play it here](https://YOUR-USERNAME.github.io/usogui-maze-yev/Usogui_Maze_yev.html)** — or download `Usogui_Maze_yev.html` and open it. One file, no install, works offline.
+**[▶ Play it here](https://Mr4Cemper.github.io/usogui-maze-yev/Usogui_Maze_yev.html)** — or download `Usogui_Maze_yev.html` and open it. One file, no install, works offline.
 
 ---
 
