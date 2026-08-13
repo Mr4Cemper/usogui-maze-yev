@@ -13,6 +13,10 @@ roundtrip-output.txt
 usogui-maze-reveal-*.txt
 *reveal*.txt
 
+# The set built for the public repository. It is assembled from this one by
+# tools/pack-public.mjs and lives outside version control here.
+publish/
+
 # Fixtures and scratch copies made while working on the interface.
 fixture*.js
 fixture*.json
