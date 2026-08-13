@@ -1,0 +1,22 @@
+{
+  "name": "usogui-maze-yev",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Usogui Maze yev - a board game for two devices with a hash commitment, built into one self contained HTML file.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "check-i18n": "node tools/check-i18n.mjs",
+    "test": "node tools/check-i18n.mjs && node --test \"tests/**/*.test.mjs\"",
+    "example": "node examples/roundtrip.mjs",
+    "pack": "node tools/pack-public.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
