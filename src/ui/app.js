@@ -23,6 +23,7 @@ import {
 } from './store.js';
 import { isStorageAvailable, loadSnapshot, saveSnapshot } from './persist.js';
 import { createRain, prefersReducedMotion } from './rain.js';
+import { createSound } from './sound.js';
 import { THEMES, applyTheme, isTheme, themeName } from './theme.js';
 import { BOARD_TOKENS, boardWarnings, normalizeColour } from './colours.js';
 import { BRUSH_WIDTHS, hasRoom, withoutLastStroke } from './ink.js';
@@ -225,6 +226,11 @@ export function startApp(container) {
   });
   const stagebar = el('nav', { class: 'stagebar', attrs: { 'aria-label': t('app.stages') } }, stripChildren);
 
+  // Four short tones, made on the spot (SPEC 5.10). Built here and handed to
+  // the screen that has something to sound about; the audio device itself is
+  // not opened until the player asks for sound.
+  const sound = createSound({ isOn: () => store.getState().soundOn === true });
+
   // The switches of the interface itself, folded into one block: the header is
   // already tight, and Part 4 brings the theme and the game colours here too.
   const toggles = new Map();
@@ -259,7 +265,16 @@ export function startApp(container) {
   function interfaceToggle(key, label, hint) {
     const input = el('input', {
       attrs: { type: 'checkbox' },
-      on: { change: () => store.setState({ [key]: input.checked }) },
+      on: {
+        change: () => {
+          store.setState({ [key]: input.checked });
+          // Switching sound on is a click, and a click is the one moment a
+          // browser lets a page open the audio device (SPEC 5.10).
+          if (key === 'soundOn') {
+            sound.unlock();
+          }
+        },
+      },
     });
     toggles.set(key, input);
     return el('div', { class: 'interface__row' }, [
@@ -406,6 +421,7 @@ export function startApp(container) {
     themeRow,
     interfaceToggle('rainOn', () => t('app.rainToggle'), () => t('app.rainHint')),
     interfaceToggle('crtOn', () => t('app.crtToggle'), () => t('app.crtHint')),
+    interfaceToggle('soundOn', () => t('app.soundToggle'), () => t('app.soundHint')),
     interfaceToggle('drawingOn', () => t('ink.toggle'), () => t('ink.hint')),
     inkTools,
     boardPanel.root,
@@ -571,7 +587,7 @@ export function startApp(container) {
       return createBuildScreen({ store });
     }
     if (screen === 'play') {
-      return createPlayScreen({ store });
+      return createPlayScreen({ store, sound });
     }
     if (screen === 'verify') {
       return createVerifyScreen({ store });
@@ -705,6 +721,7 @@ export function startApp(container) {
     toggles.get('rainOn').checked = rainOn && !prefersReducedMotion();
     toggles.get('rainOn').disabled = prefersReducedMotion();
     toggles.get('crtOn').checked = state.crtOn !== false;
+    toggles.get('soundOn').checked = state.soundOn === true;
     toggles.get('autoEndTurn').checked = state.autoEndTurn === true;
     rain?.setEnabled(rainOn);
     // The scan lines and the vignette are one layer; switching them off is a

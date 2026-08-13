@@ -34,6 +34,7 @@ import { createHistoryBlock, mergeHistory } from '../components/historyPanel.js'
 import { applyAction, isGameSetupComplete, runJournal } from '../gameLog.js';
 import { appendStroke, brushFor } from '../ink.js';
 import { saveBoardsPng } from '../export.js';
+import { soundForAction } from '../sound.js';
 import { formatClock } from './build.js';
 import { t } from '../../i18n/index.js';
 
@@ -202,10 +203,12 @@ export function shouldAutoEnd(hints, { autoEndTurn, pending }) {
  *
  * @param {object} options Screen options.
  * @param {object} options.store The application store.
+ * @param {object} [options.sound] The four tones (SPEC 5.10). Optional so that
+ *   the screen can be built without audio at all.
  * @returns {{root: HTMLElement, update: (state: object) => void, destroy: () => void}}
  *   The screen element, its updater and a cleanup hook.
  */
-export function createPlayScreen({ store }) {
+export function createPlayScreen({ store, sound = null }) {
   /** The core game state, rebuilt from the journal, never persisted. */
   let game = null;
   /** Correction lines the journal carries, from steps that were taken back. */
@@ -473,6 +476,13 @@ export function createPlayScreen({ store }) {
       return null;
     }
     appliedCount += 1;
+    // Only here. Restoring a game goes through `rebuild`, which replays the
+    // whole journal at once: sounding on every replayed step would greet the
+    // player with a burst of fire (SPEC 5.10).
+    const voice = soundForAction({ action, result, live: true });
+    if (voice !== null) {
+      sound?.play(voice);
+    }
     store.setState({ gameActions: journal });
     return result;
   }

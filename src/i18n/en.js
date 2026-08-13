@@ -27,6 +27,8 @@ export default {
   'app.rainHint': 'The rain behind everything. It stops on its own when the tab is hidden.',
   'app.crtToggle': 'Screen effects',
   'app.crtHint': 'Scan lines and the darkened corners. Switch them off if text is hard to read.',
+  'app.soundToggle': 'Sound',
+  'app.soundHint': 'Four short tones: a step, a wall, the turn changing hands, the exit. Off by default, because you are talking to each other.',
   'ink.toggle': 'Drawing',
   'ink.hint':
     'Draw over the boards with a finger or the mouse. The game underneath is paused while this is on, and the drawings stay when it is off.',

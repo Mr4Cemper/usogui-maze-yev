@@ -84,6 +84,10 @@ export function createDefaultState() {
     drawingOn: false,
     rainOn: true,
     crtOn: true,
+    // Sound. Off by default and on purpose: the two players are talking to each
+    // other, next to each other or over a call, and a noise nobody asked for
+    // lands in the middle of that conversation (SPEC 5.10).
+    soundOn: false,
     // Handing the turn over by itself once the core says it is technically
     // over. Off by default, and never part of the settings block: it is a
     // convenience of this device, not something the players agreed on.
@@ -195,6 +199,7 @@ export function serializeState(state) {
     brush: { ...state.brush },
     rainOn: state.rainOn,
     crtOn: state.crtOn,
+    soundOn: state.soundOn,
     autoEndTurn: state.autoEndTurn,
     gameStarted: state.gameStarted,
     gameActions: state.gameActions.map((action) => ({ ...action })),
@@ -320,6 +325,9 @@ export function deserializeState(snapshot) {
   // clear "off" leaves the rain on.
   state.rainOn = snapshot.rainOn !== false;
   state.crtOn = snapshot.crtOn !== false;
+  // The other way round from the two above: silence is the default, so only a
+  // clear "on" turns sound on.
+  state.soundOn = snapshot.soundOn === true;
   state.autoEndTurn = snapshot.autoEndTurn === true;
   // Reading the rules is where the player was, so that is where the reload
   // puts them back.
@@ -349,8 +357,9 @@ export function deserializeState(snapshot) {
  * a new `game_nonce`, and that is exactly what stops a commit from an earlier
  * game being replayed.
  *
- * Kept: the role, the language and the switches of the interface. Game
- * colours, brush and sound will join them when they exist.
+ * Kept: the role, the language, the theme, the game colours, the brush, the
+ * sound switch and the switches of the interface - everything that describes
+ * this device and the person at it rather than the game (SPEC 5.8).
  *
  * @param {object} state Current application state.
  * @returns {object} A fresh state that remembers only the preferences.
@@ -364,6 +373,7 @@ export function resetState(state) {
   fresh.brush = { ...state.brush };
   fresh.rainOn = state.rainOn;
   fresh.crtOn = state.crtOn;
+  fresh.soundOn = state.soundOn;
   fresh.autoEndTurn = state.autoEndTurn;
   return fresh;
 }
@@ -392,6 +402,7 @@ export function nextGameState(state, freshSettings, freshCode) {
   fresh.theme = state.theme;
   fresh.rainOn = state.rainOn;
   fresh.crtOn = state.crtOn;
+  fresh.soundOn = state.soundOn;
   fresh.autoEndTurn = state.autoEndTurn;
   fresh.settings = freshSettings;
   fresh.settingsCode = freshCode;
