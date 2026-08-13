@@ -1,0 +1,310 @@
+/*
+ * board.css - the board, lit like a phosphor screen (SPEC 5.13).
+ *
+ * Glow is never done with `filter: drop-shadow`: this board carries 96 hit
+ * zones, 60 walls and their markers, and an SVG filter on that many nodes is
+ * visibly slow on a phone. Instead every glowing shape is drawn twice - a wide
+ * translucent stroke underneath, a thin bright one on top. It costs nothing,
+ * needs no filter support, and reads the same.
+ *
+ * The geometry of the hit zones is fixed and covered by tests. Only looks
+ * change here.
+ */
+
+.board {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+.board__bg {
+  fill: var(--board-bg);
+}
+
+.board__label {
+  fill: var(--board-label);
+  font-family: var(--font-display);
+  font-size: 30px;
+  letter-spacing: 2px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.board__cell {
+  fill: transparent;
+}
+
+.board__cell.is-visited {
+  fill: var(--board-passage);
+  fill-opacity: 0.1;
+}
+
+.board__cell.is-hidden {
+  fill: var(--board-unknown);
+}
+
+.board__cell.is-highlighted {
+  fill: var(--accent);
+  fill-opacity: 0.16;
+}
+
+/* The grid is barely there: it should suggest the cells, not draw them. */
+.board__grid-line {
+  stroke: var(--board-grid);
+  stroke-width: var(--stroke-grid);
+  shape-rendering: crispEdges;
+}
+
+/* Frame: wide dim stroke under a crisp bright one - the double stroke trick. */
+.board__frame-glow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 14;
+  stroke-opacity: 0.22;
+}
+
+.board__frame {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-opacity: 0.9;
+}
+
+.board__passage {
+  stroke: var(--board-passage);
+  stroke-width: var(--stroke-passage);
+  stroke-linecap: round;
+  stroke-opacity: 0.75;
+  visibility: hidden;
+}
+
+.board__passage.is-open {
+  visibility: visible;
+}
+
+.board__wall-glow {
+  stroke: var(--board-wall);
+  stroke-width: var(--stroke-wall-glow);
+  stroke-linecap: round;
+  stroke-opacity: 0.22;
+  visibility: hidden;
+}
+
+.board__wall {
+  stroke: var(--board-wall);
+  stroke-width: var(--stroke-wall);
+  stroke-linecap: round;
+  visibility: hidden;
+}
+
+.board__wall.is-wall,
+.board__wall-glow.is-wall {
+  visibility: visible;
+}
+
+/* A wall on my own board is part of the maze I built: I know them all, they
+   are structure. A wall on the opponent's board is the place where I ran into
+   something and lost the turn - an event, not structure - so it gets its own
+   colour, warm and loud (SPEC 5.6). The halo has its own width because a warm
+   colour smears where the accent does not. */
+/* Drawings (SPEC 5.7). They live in the coordinate space of the board, so
+   they scale with it and land in the export in the right place. The surface
+   above them is transparent and lets everything through until drawing is
+   switched on. */
+.board__stroke {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.board__ink-surface {
+  pointer-events: none;
+}
+
+.board--drawing .board__ink-surface {
+  pointer-events: all;
+  cursor: crosshair;
+  /* Without this a finger drags the page instead of drawing a line. */
+  touch-action: none;
+}
+
+.board__wall.is-known {
+  stroke: var(--board-wall-found);
+}
+
+.board__wall-glow.is-known {
+  stroke: var(--board-wall-found);
+  stroke-width: var(--stroke-wall-found-glow);
+}
+
+/* While building, every edge that could take a wall shows a hairline, so the
+   player can see where the walls may go (the prototype did the same). */
+.board--build .board__wall {
+  visibility: visible;
+  stroke: var(--acc-dim);
+  stroke-width: 3;
+  stroke-opacity: 0.35;
+}
+
+.board--build .board__wall.is-wall {
+  stroke: var(--board-wall);
+  stroke-width: var(--stroke-wall);
+  stroke-opacity: 1;
+}
+
+/* Pointing at an edge lights it up rather than filling a rectangle. */
+.board__wall.is-hovered {
+  visibility: visible;
+  stroke: var(--board-hover);
+  stroke-width: var(--stroke-wall);
+  stroke-opacity: 0.85;
+}
+
+.board__wall-glow.is-hovered {
+  visibility: visible;
+}
+
+.board__wall.is-highlighted,
+.board__wall-glow.is-highlighted {
+  visibility: visible;
+  stroke: var(--accent);
+}
+
+.board__entrance-glow,
+.board__exit-glow {
+  fill: none;
+  stroke-width: 20;
+  stroke-opacity: 0.2;
+  stroke-linecap: round;
+  visibility: hidden;
+}
+
+.board__entrance-glow {
+  stroke: var(--board-entrance);
+}
+
+.board__exit-glow {
+  stroke: var(--board-exit);
+}
+
+.board__entrance {
+  fill: none;
+  stroke: var(--board-entrance);
+  stroke-width: 7;
+  visibility: hidden;
+}
+
+.board__exit {
+  fill: none;
+  stroke: var(--board-exit);
+  stroke-width: 7;
+  stroke-linecap: round;
+  visibility: hidden;
+}
+
+.board__entrance.is-placed,
+.board__exit.is-placed,
+.board__entrance-glow.is-placed,
+.board__exit-glow.is-placed {
+  visibility: visible;
+}
+
+.board__token-glow {
+  fill-opacity: 0.25;
+  visibility: hidden;
+}
+
+.board__token {
+  stroke: var(--bg);
+  stroke-width: 2;
+  visibility: hidden;
+}
+
+.board__token.is-placed,
+.board__token-glow.is-placed {
+  visibility: visible;
+}
+
+.board__token--me,
+.board__token-glow--me {
+  fill: var(--board-token-me);
+}
+
+.board__token--opponent,
+.board__token-glow--opponent {
+  fill: var(--board-token-opponent);
+}
+
+/* Hit areas. Edge zones sit above cell zones, so a click near a border lands
+   on the edge and a click in the middle lands on the cell. Along the edge the
+   zone stops short of the corners: where four cells meet, full length zones of
+   two perpendicular edges would overlap and the click would be ambiguous. */
+
+.board__hit {
+  fill: var(--board-hover);
+  fill-opacity: 0;
+  cursor: pointer;
+  outline: none;
+}
+
+.board__hit--cell:hover {
+  fill-opacity: 0.12;
+}
+
+.board__hit:focus-visible {
+  fill-opacity: 0.2;
+  stroke: var(--focus-ring);
+  stroke-width: 4;
+}
+
+.board--readonly .board__hit,
+.board--cells-only .board__hit--edge,
+.board--play .board__hit--edge {
+  pointer-events: none;
+  cursor: default;
+}
+
+/* While playing, only the four neighbours of the pawn behave like targets. */
+.board--play .board__hit--cell {
+  cursor: default;
+}
+
+.board--play .board__hit--cell:not(.is-available):hover {
+  fill-opacity: 0;
+}
+
+.board--play .board__hit--cell.is-available {
+  cursor: pointer;
+}
+
+/* "You may step here", drawn above the entrance and the exit so that a big
+   marker cannot hide the fact that the cell is a legal target. */
+.board__available {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-dasharray: 14 10;
+  stroke-opacity: 0.9;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.board__available.is-available {
+  visibility: visible;
+}
+
+/* The trail: a dot in every cell the pawn has stood in, and a line between
+   the centres of cells a pawn has walked between. */
+.board__dot {
+  fill: var(--board-passage);
+  fill-opacity: 0.55;
+  visibility: hidden;
+}
+
+.board__dot.is-visited {
+  visibility: visible;
+}

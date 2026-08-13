@@ -1,0 +1,1473 @@
+/*
+ * app.css - the shell, dressed as an old terminal behind glass (SPEC 5.13).
+ *
+ * Two text registers, never mixed:
+ *   chrome - titles, buttons, labels, counters, stage names, coordinates.
+ *            Upper case, spaced out, sometimes glowing.
+ *   prose  - explanations, hints, errors, checklists. Normal case, no glow,
+ *            `--track-tight`, on `--text-body`, which is the only colour with
+ *            enough contrast to read a paragraph in.
+ *
+ * The page scrolls normally. The scan lines, the vignette and the rain are
+ * `fixed` and never scroll, so the content slides underneath them - that is
+ * what makes the glass read as glass instead of as wallpaper.
+ */
+
+@import "./tokens.css";
+@import "./board.css";
+
+* {
+  box-sizing: border-box;
+}
+
+/* `hidden` has to win over the display values set below, or a panel that is
+   laid out with flex stays on screen after being hidden. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text-body);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: var(--track-tight);
+}
+
+/* ---------------------------------------------------------------- dressing */
+
+#rain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--rain-opacity);
+  pointer-events: none;
+}
+
+#rain[hidden] {
+  display: none;
+}
+
+#scan {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, var(--scanline-opacity)) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+#scan::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, var(--vignette-strength)) 100%
+  );
+}
+
+/* ------------------------------------------------------------- stage strip */
+
+.stagebar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* No vertical padding here: it belongs to the steps, so that the whole
+     height of the strip is part of their hit area. See .stagebar__step. */
+  padding: 0 16px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+  background: linear-gradient(var(--bg) 62%, transparent);
+}
+
+.stagebar__line {
+  flex: 1;
+  height: 1px;
+  background: var(--acc-dark);
+}
+
+/* The steps are buttons: a stage that has been reached can be opened again,
+   which is the way out of every screen (SPEC 5.3).
+
+   The padding is the hit area and it is not decoration. With `padding: 0` the
+   button box is exactly the glyphs - about 95 x 14 px inside a 37 px strip -
+   so most of what reads as one row of tabs was dead space: the click landed on
+   the <nav> and nothing happened at all. A step that is visible must be a step
+   that can be hit, and a missed click here has no feedback whatsoever. The
+   look does not change: the background stays transparent and the brackets of
+   the ordinary buttons stay off. */
+.stagebar__step {
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  align-self: stretch;
+  padding: 10px 8px;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.stagebar__step::before,
+.stagebar__step::after {
+  content: none;
+}
+
+/* The separator belongs to the word, so that folding the word away on a narrow
+   screen does not leave a dot hanging after the number. */
+.stagebar__word::before {
+  content: "· ";
+}
+
+/* Below this the four words no longer fit in any language - Ukrainian needs
+   670 px of them, English 556 - and the page would start scrolling sideways.
+   Only the step you are standing on keeps its word; the rest keep their
+   number. The hit area does not shrink with the text: a folded step is still
+   44 px wide and the full height of the strip. */
+@media (max-width: 700px) {
+  .stagebar__step:not(.is-current) .stagebar__word {
+    display: none;
+  }
+
+  .stagebar__step:not(.is-current) {
+    min-width: 44px;
+    text-align: center;
+  }
+}
+
+/* On a phone even one word is too much next to three numbers. */
+@media (max-width: 430px) {
+  .stagebar__word {
+    display: none;
+  }
+
+  .stagebar__step {
+    min-width: 44px;
+    text-align: center;
+  }
+}
+
+.stagebar__step:hover:not(:disabled) {
+  color: var(--accent);
+  background: transparent;
+  box-shadow: none;
+}
+
+.stagebar__step:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.stagebar__step.is-current {
+  color: var(--accent);
+  text-shadow: var(--glow-sm);
+}
+
+/* A finished stage steps back but still has to be readable, so it goes to
+   --text-muted rather than to the hairline colour (SPEC 5.13). */
+.stagebar__step.is-done {
+  color: var(--text-muted);
+}
+
+.stagebar__step.is-done::before {
+  content: "✓ ";
+}
+
+/* --------------------------------------------------------------- structure */
+
+.app {
+  position: relative;
+  z-index: 10;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--gap) calc(var(--gap) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.app__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gap);
+  border-bottom: 1px solid var(--acc-dark);
+  padding: calc(var(--gap) / 2) 0 var(--gap);
+}
+
+.app__header h1 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.app__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 4.5vw, 2.3rem);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: clamp(3px, 1.4vw, var(--track-hero));
+  color: var(--accent);
+  text-shadow: var(--glow-lg);
+  animation: flicker 4s infinite;
+}
+
+.app__cursor {
+  color: var(--accent);
+  text-shadow: var(--glow-sm);
+  animation: blink 1s steps(1) infinite;
+}
+
+.app__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+@keyframes flicker {
+  0%,
+  90%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.55;
+  }
+  93% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.75;
+  }
+  97% {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app__title,
+  .app__cursor {
+    animation: none;
+  }
+}
+
+.app__notice {
+  border: 1px solid var(--acc-dark);
+  border-left: 2px solid var(--warn);
+  background: var(--surface);
+  color: var(--text-body);
+  padding: calc(var(--gap) / 1.5) var(--gap);
+  font-size: 1rem;
+}
+
+.app__notice--danger {
+  border-left-color: var(--error);
+}
+
+.app__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  align-items: center;
+  margin-left: auto;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.panel {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--acc-dark);
+  border-radius: var(--radius);
+  padding: var(--gap);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 1.5);
+}
+
+.panel__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+  text-shadow: var(--glow-sm);
+}
+
+.panel__hint {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+
+/* ------------------------------------------------------------------- forms */
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: var(--gap);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field__label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+/* A range is small but it is read, so it stays on the readable tone rather
+   than on the hairline one (SPEC 5.13). */
+.field__range {
+  font-size: 0.85rem;
+  letter-spacing: var(--track-tight);
+  color: var(--text-muted);
+}
+
+.field__error {
+  font-size: 0.95rem;
+  color: var(--error);
+  min-height: 1em;
+}
+
+input[type="number"],
+input[type="text"],
+select,
+textarea {
+  background: transparent;
+  color: var(--text-body);
+  border: 1px solid var(--acc-dark);
+  border-radius: var(--radius);
+  padding: 7px 9px;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: var(--track-tight);
+  width: 100%;
+}
+
+select {
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+}
+
+select option {
+  background: var(--bg);
+  color: var(--text-body);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 3.2em;
+  word-break: break-all;
+  letter-spacing: 1px;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--acc-dim);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+input.is-invalid,
+textarea.is-invalid {
+  border-color: var(--error);
+  box-shadow: none;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  color: var(--acc-dim);
+  border-color: var(--acc-dark);
+  opacity: 0.6;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) / 2);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+/* ----------------------------------------------------------------- buttons */
+
+button {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 7px 14px;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  cursor: pointer;
+}
+
+button::before {
+  content: "[ ";
+}
+
+button::after {
+  content: " ]";
+}
+
+button:hover:not(:disabled) {
+  background: var(--hover);
+  box-shadow: var(--glow-md);
+}
+
+button.is-primary {
+  text-shadow: var(--glow-sm);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+button.is-active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: var(--glow-md);
+  text-shadow: none;
+}
+
+button:disabled {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 0.25;
+  cursor: default;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--gap) / 2);
+  align-items: center;
+}
+
+/* ------------------------------------------------------- codes and console */
+
+.code-output {
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  letter-spacing: 1px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--acc-dark);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  word-break: break-all;
+  user-select: all;
+  color: var(--text-body);
+}
+
+.code-input {
+  user-select: all;
+}
+
+.status {
+  font-size: 0.95rem;
+  min-height: 1.3em;
+  color: var(--text-muted);
+}
+
+.status:not(:empty)::before {
+  content: "> ";
+  color: var(--acc-dim);
+}
+
+.status.is-ok {
+  color: var(--ok);
+}
+
+.status.is-error {
+  color: var(--error);
+}
+
+.status.is-warn {
+  color: var(--warn);
+}
+
+.problem-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--acc-dark);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.problem-list__item {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 1rem;
+  color: var(--error);
+}
+
+.problem-list__item::before {
+  content: ">";
+  color: var(--acc-dim);
+}
+
+.problem-list__item.is-ok {
+  color: var(--ok);
+}
+
+.problem-list__item.is-consequence {
+  color: var(--warn);
+}
+
+.problem-list__marker {
+  font-family: var(--font-mono);
+}
+
+/* ------------------------------------------------------------------ boards */
+
+.board-panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 1.5);
+}
+
+.board-panel__frame {
+  padding: calc(var(--gap) / 2);
+}
+
+.counter,
+.timer {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+  text-shadow: var(--glow-sm);
+}
+
+.counter {
+  font-size: 0.95rem;
+}
+
+.timer {
+  font-size: 0.9rem;
+}
+
+.counter.is-error {
+  color: var(--error);
+}
+
+.timer.is-expired {
+  color: var(--warn);
+}
+
+.timer.is-off {
+  color: var(--acc-dim);
+  text-shadow: none;
+}
+
+/* --------------------------------------------------------------- checklist */
+
+.checklist {
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--acc-dark);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 1rem;
+}
+
+.checklist__item {
+  color: var(--text-muted);
+}
+
+.checklist__item::before {
+  content: ">";
+  color: var(--acc-dim);
+  margin-right: 6px;
+}
+
+.checklist__item.is-done {
+  color: var(--ok);
+}
+
+.checklist__item.is-missing {
+  color: var(--warn);
+}
+
+/* ---------------------------------------------------------------- the game */
+
+/*
+ * Everything a turn needs has to fit a laptop screen at once: the focus line,
+ * both boards and the buttons. So the status is one line, the instructions are
+ * folded away, the button bar sticks to the bottom of the window, and the
+ * boards are bounded by the height of the viewport, not only by its width.
+ */
+
+.play {
+  gap: calc(var(--gap) / 1.5);
+}
+
+.play__turn {
+  gap: calc(var(--gap) / 2.5);
+  padding: calc(var(--gap) / 1.5) var(--gap);
+}
+
+.play__status {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+}
+
+.play__status.is-out {
+  color: var(--text-muted);
+}
+
+/*
+ * The line the player reads out loud, in the opponent's turn. It has its own
+ * element, appears in two places - at the top and under the board where their
+ * steps are entered - and is the loudest thing on the screen, because it is
+ * the only thing here done with the voice instead of the eyes.
+ */
+.play__say {
+  font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+  text-shadow: var(--glow-md);
+  border: 1px solid var(--accent);
+  padding: calc(var(--gap) / 2) var(--gap);
+  line-height: 1.2;
+}
+
+.play__say--board {
+  font-size: clamp(1.2rem, 3vw, 1.6rem);
+  text-align: center;
+}
+
+/* One block, always the same height, so the layout never moves between the
+   phases of a turn: choosing a step, answering, reading a line out loud. */
+.play__voice {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 3);
+  min-height: 132px;
+}
+
+.play__voice-line {
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+/* The line the player reads out loud. In the opponent's turn this is the only
+   thing on the screen done with the voice, so it is the loudest thing on it. */
+.play__voice-line.is-say {
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  color: var(--accent);
+  text-shadow: var(--glow-md);
+}
+
+.play__voice-line.is-question {
+  color: var(--warn);
+}
+
+.play__voice-line.is-auto {
+  color: var(--ok);
+}
+
+.play__voice-hint:empty {
+  display: none;
+}
+
+.play__answer-label {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+}
+
+.play__override-button {
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: var(--track-tight);
+  color: var(--text-muted);
+  text-decoration: underline;
+  background: transparent;
+}
+
+.play__override-button::before {
+  content: "";
+}
+
+.play__override-button::after {
+  content: "";
+}
+
+.play__override-button:hover:not(:disabled) {
+  color: var(--accent);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* The core said the turn is technically over. It is not closed for the player
+   - that would be refereeing - but the button stops looking like the others. */
+button.is-urgent {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: var(--glow-md);
+  text-shadow: none;
+}
+
+.play__help > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+.play__help[open] > summary {
+  margin-bottom: calc(var(--gap) / 2);
+}
+
+.play__focus-hint:empty {
+  display: none;
+}
+
+.play__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap);
+  align-items: start;
+}
+
+.play__boards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--gap);
+  align-items: start;
+}
+
+.play__history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* The history scrolls inside itself rather than making the page taller than
+   the boards it stands next to. */
+.play__history .history__list {
+  max-height: 22vh;
+}
+
+/* Wide enough for the history to sit beside the boards instead of below them,
+   so checking what was said on move four does not mean leaving the boards. */
+@media (min-width: 1200px) {
+  .play__stage {
+    grid-template-columns: minmax(0, 3fr) minmax(300px, 1fr);
+  }
+}
+
+@media (min-width: 1500px) {
+  .play__stage {
+    grid-template-columns: minmax(0, 2fr) minmax(380px, 1fr);
+  }
+}
+
+/* The board is square, so bounding its width by a share of the viewport height
+   bounds its height as well. */
+.play .board-panel__frame {
+  display: flex;
+  justify-content: center;
+}
+
+.play .board {
+  max-width: min(100%, 40vh);
+}
+
+.play .play__answers {
+  gap: calc(var(--gap) / 2);
+}
+
+.play .board-panel .play__answer-button {
+  font-size: 0.95rem;
+  padding: 8px 14px;
+}
+
+.play .board-panel {
+  gap: calc(var(--gap) / 2);
+  padding: calc(var(--gap) / 1.5);
+}
+
+.play__bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  align-items: center;
+  justify-content: space-between;
+  /* Opaque on purpose: text scrolling underneath must not show through. */
+  background: var(--bg);
+  border-top: 1px solid var(--accent);
+  padding: calc(var(--gap) / 1.5) var(--gap);
+  margin: 0 calc(var(--gap) * -1) calc(var(--gap) * -3);
+}
+
+.play__bar-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: calc(var(--gap) / 1.5);
+}
+
+.play__bar .status:empty {
+  display: none;
+}
+
+.play__limit {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.play__limit.is-warn {
+  color: var(--warn);
+}
+
+.play__bar-buttons {
+  justify-content: flex-end;
+}
+
+/* The one line that says what to do right now: the answer to read out loud in
+   the opponent's turn, the question to answer in mine. */
+.play__focus {
+  font-size: clamp(1.1rem, 3.2vw, 1.6rem);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+  padding: calc(var(--gap) / 2) 0;
+}
+
+.play__focus.is-answer {
+  color: var(--accent);
+  text-shadow: var(--glow-md);
+}
+
+.play__focus.is-question {
+  color: var(--warn);
+}
+
+/* The row keeps its height even when there is nothing to answer: the layout
+   may not jump between the phases of a turn. */
+.play__answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--gap) / 1.5);
+  align-items: center;
+  min-height: 40px;
+  visibility: hidden;
+}
+
+.play__answers.is-active {
+  visibility: visible;
+}
+
+.play__answer-button {
+  font-size: 1.05rem;
+  padding: 12px 22px;
+}
+
+.board-panel.is-idle {
+  opacity: 0.55;
+}
+
+.board-panel.is-idle .panel__title {
+  text-shadow: none;
+}
+
+.history__list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--acc-dark);
+  background: var(--bg-elevated);
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.history__item {
+  color: var(--text-body);
+}
+
+.history__item::before {
+  content: ">";
+  color: var(--acc-dim);
+  margin-right: 6px;
+}
+
+.history__item.is-empty,
+.history__item--undo {
+  color: var(--text-muted);
+}
+
+.history__item--pass {
+  color: var(--warn);
+}
+
+.history__item--resign {
+  color: var(--error);
+}
+
+/* ------------------------------------------------- interface panel and CRT */
+
+.interface {
+  border: 1px solid var(--acc-dark);
+  padding: calc(var(--gap) / 2) var(--gap);
+  max-width: 420px;
+}
+
+.interface > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+.interface__row {
+  margin-top: calc(var(--gap) / 2);
+}
+
+/* The colour plaques. Same component twice, so one block of rules (SPEC 5.6). */
+.colour-panel {
+  margin-top: calc(var(--gap) / 2);
+  border: 1px solid var(--acc-dark);
+  border-radius: var(--radius);
+  padding: calc(var(--gap) / 2) var(--gap);
+}
+
+.colour-panel__title {
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+.colour-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: calc(var(--gap) / 3) var(--gap);
+  margin: calc(var(--gap) / 2) 0;
+}
+
+.colour-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) / 2);
+}
+
+.colour-row__label {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) / 2);
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--text-body);
+}
+
+.colour-row__label span {
+  overflow-wrap: anywhere;
+}
+
+/* The swatch is the control: big enough to hit, square, no chrome of its own
+   beyond the border every field here carries. */
+.colour-row__input {
+  flex: none;
+  width: 40px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+}
+
+.colour-row__input.is-overridden {
+  border-color: var(--accent);
+}
+
+.colour-row__reset {
+  flex: none;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+}
+
+.colour-panel__notices {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 3);
+}
+
+/* Not a button: a link out of the application. It reads like the rest of the
+   chrome and behaves like a link, which is the point. */
+.interface__link {
+  display: inline-block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+}
+
+.interface__link:hover,
+.interface__link:focus-visible {
+  color: var(--accent);
+}
+
+.interface__language {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--gap) / 2);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.interface__language select {
+  flex: 1;
+  max-width: 220px;
+}
+
+.interface__row .panel__hint {
+  font-size: 0.85rem;
+  margin-left: 26px;
+}
+
+/* The scan lines and the vignette are one layer, so one class turns the whole
+   effect off for whoever finds it tiring. */
+:root.no-crt #scan {
+  display: none;
+}
+
+/* ----------------------------------------------------------- verification */
+
+.report {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 2);
+}
+
+.report__item {
+  display: grid;
+  grid-template-columns: 2.2em minmax(0, 12em) 6em minmax(0, 1fr);
+  gap: calc(var(--gap) / 2);
+  align-items: baseline;
+  border-left: 3px solid var(--acc-dark);
+  padding-left: calc(var(--gap) / 2);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .report__item {
+    grid-template-columns: 2.2em minmax(0, 1fr);
+  }
+}
+
+.report__number,
+.report__status {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.report__title {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.report__item.is-ok {
+  border-left-color: var(--ok);
+}
+
+.report__item.is-fail {
+  border-left-color: var(--error);
+}
+
+.report__item.is-fail .report__status,
+.report__item.is-fail .report__text {
+  color: var(--error);
+}
+
+.report__item.is-skipped {
+  border-left-color: var(--acc-dim);
+  opacity: 0.75;
+}
+
+/* Step 7 takes its colour from the outcome, never from its status: `ok` there
+   only means that the verdict was computed (SPEC 4.8). */
+.report__item.is-win {
+  border-left-color: var(--ok);
+}
+
+.report__item.is-loss,
+.report__item.is-both-lose {
+  border-left-color: var(--error);
+}
+
+.report__item.is-draw {
+  border-left-color: var(--warn);
+}
+
+/* Passed checks fold into one line; anything that failed or was skipped stays
+   open and in the way, which is the point of a report. */
+.report__passed {
+  border-left: 3px solid var(--ok);
+  padding-left: calc(var(--gap) / 2);
+}
+
+.report__passed > summary {
+  cursor: pointer;
+  color: var(--ok);
+  font-size: 0.95rem;
+}
+
+.report__passed-item {
+  display: flex;
+  gap: calc(var(--gap) / 2);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding-top: 2px;
+}
+
+.verify__subject {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  border-left: 2px solid var(--acc-dark);
+  padding-left: calc(var(--gap) / 2);
+  word-break: break-word;
+}
+
+/* The two resignations live behind one control at the end of the row: once a
+   game, or never. */
+.play__finish {
+  margin-left: auto;
+  border: 1px solid var(--acc-dark);
+  padding: 4px 10px;
+}
+
+.play__finish > summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.play__finish[open] {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  z-index: 25;
+  background: var(--bg);
+  border-color: var(--accent);
+  padding: var(--gap);
+  max-width: 420px;
+}
+
+.play__finish[open] .panel__hint {
+  margin: calc(var(--gap) / 2) 0;
+}
+
+.play__bar-buttons {
+  position: relative;
+}
+
+.report__mismatches {
+  grid-column: 1 / -1;
+  list-style: none;
+  margin: calc(var(--gap) / 2) 0 0;
+  padding: calc(var(--gap) / 2);
+  border: 1px solid var(--acc-dark);
+  background: var(--bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 2);
+  font-size: 0.95rem;
+}
+
+.report__mismatches summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.verdict__line {
+  font-size: clamp(1.3rem, 4vw, 1.9rem);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  padding-top: calc(var(--gap) / 2);
+}
+
+.verdict__line.is-win {
+  color: var(--ok);
+  text-shadow: var(--glow-md);
+}
+
+.verdict__line.is-loss,
+.verdict__line.is-both-lose {
+  color: var(--error);
+}
+
+.verdict__line.is-draw {
+  color: var(--warn);
+}
+
+/* ------------------------------------------------------------------- rules */
+
+/* The rules cover everything, the stage strip included: they are read, then
+   closed, and the screen underneath comes back exactly as it was. The page
+   below keeps its scroll - nothing here sets `overflow: hidden` on the body
+   (SPEC 5.13). */
+.rules {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: var(--gap);
+}
+
+.rules__sheet {
+  /* Prose is read in a column, not across a monitor (SPEC 5.13). */
+  max-width: 68ch;
+  margin: 0 auto;
+  padding-bottom: calc(var(--gap) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.rules__top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  background: var(--bg);
+  border-bottom: 1px solid var(--acc-dark);
+  padding: var(--gap) 0;
+}
+
+.rules__title {
+  margin: 0;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+}
+
+.rules__section {
+  border: 1px solid var(--acc-dark);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* The heading is the whole row, and it has to be hit like one: `summary`
+   defaults to `display: list-item`, which makes the clickable box the marker
+   and the letters. A heading that only answers a click on its glyphs is the
+   same defect the stage strip had. */
+.rules__heading {
+  display: block;
+  cursor: pointer;
+  padding: calc(var(--gap) / 1.5) var(--gap);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--accent);
+}
+
+.rules__heading::marker,
+.rules__heading::-webkit-details-marker {
+  content: "";
+  display: none;
+}
+
+.rules__heading::before {
+  content: "+ ";
+  color: var(--text-muted);
+}
+
+.rules__section[open] > .rules__heading::before {
+  content: "− ";
+}
+
+.rules__heading:hover {
+  background: var(--hover);
+}
+
+.rules__body {
+  padding: 0 var(--gap) var(--gap);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 1.5);
+}
+
+/* Prose: ordinary case, no glow, the one colour with enough contrast to read
+   in paragraphs (SPEC 5.13). */
+.rules__text,
+.rules__steps li,
+.rules__checks li,
+.rules__glossary dd {
+  margin: 0;
+  color: var(--text-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: var(--track-tight);
+  text-transform: none;
+}
+
+.rules__steps,
+.rules__checks {
+  margin: 0;
+  padding-left: 1.6em;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--gap) / 2);
+}
+
+.rules__checks b {
+  color: var(--accent);
+}
+
+.rules__glossary {
+  margin: 0;
+}
+
+.rules__glossary dt {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  font-size: 0.85rem;
+}
+
+.rules__glossary dd {
+  margin: calc(var(--gap) / 3) 0 var(--gap);
+}
+
+.rules__bottom {
+  display: flex;
+  justify-content: center;
+}
+
+/* -------------------------------------------------------------------- misc */
+
+.stub {
+  text-align: center;
+  padding: calc(var(--gap) * 3);
+  color: var(--text-body);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

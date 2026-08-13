@@ -1,0 +1,501 @@
+/*
+ * tokens.css - every colour, metric and effect the interface may use
+ * (SPEC 5.11, 5.13). Rules elsewhere read these variables and never write a
+ * colour of their own, so a theme is a block of values and nothing else.
+ *
+ * One preset is three blocks: the theme itself, and a palette for each role.
+ * Player 1 and Player 2 get different accents in every theme (SPEC 5.13), and
+ * the role blocks are scoped to their theme so that no value can leak from one
+ * preset into another. `tests/ui-theme.test.mjs` reads the token list out of
+ * `src/ui/theme.js` and holds every preset against it: a preset that forgets a
+ * token paints black on black, and nothing else would catch it.
+ *
+ * Contrast is measured, not guessed. Body text on the background:
+ *   xp-cyber  15.77 / 17.36      dark   14.88 / 14.88
+ *   light     16.47 / 16.47      paper  14.13 / 14.13
+ *   amber     14.52 / 14.52
+ * A wall you ran into is the loudest thing on the board and stays above 9:1 to
+ * the board background in every preset (SPEC 5.6).
+ */
+
+/* ============================================================== xp-cyber ==
+   An old terminal behind glass. The default, and the only preset that keeps
+   the cathode ray tube dressing at full strength. */
+
+:root,
+:root[data-theme="xp-cyber"] {
+  --radius: 0px;
+  --gap: 12px;
+  --font-display: ui-monospace, "Courier New", Consolas, "DejaVu Sans Mono", monospace;
+  --font-ui: var(--font-display);
+  --font-mono: var(--font-display);
+  --stroke-grid: 1;
+  --stroke-wall: 7;
+  --stroke-wall-glow: 18;
+  --stroke-wall-found-glow: 12;
+  --stroke-passage: 4;
+
+  --glow-sm: 0 0 7px currentColor;
+  --glow-md: 0 0 12px currentColor;
+  --glow-lg: 0 0 14px currentColor;
+
+  --track-tight: 0.3px;
+  --track-wide: 2px;
+  --track-hero: 10px;
+
+  --scanline-opacity: 0.32;
+  --vignette-strength: 0.8;
+  --rain-opacity: 0.2;
+
+  --ok: #66ff9c;
+  --warn: #ffc857;
+  --error: #ff5c5c;
+  --accent-contrast: #000000;
+}
+
+/* Player 1: cyan. Also the palette before a role has been chosen. */
+:root,
+:root[data-role="1"],
+:root[data-theme="xp-cyber"][data-role="1"] {
+  --acc: #00e5ff;
+  --acc-dim: #007a99;
+  --acc-dark: #003b46;
+  --bg: #000a12;
+  --hover: #00202e;
+
+  --accent: var(--acc);
+  --bg-elevated: rgba(0, 32, 46, 0.55);
+  --surface: rgba(0, 18, 28, 0.55);
+  --border: var(--acc-dark);
+  --text-body: #cfe9f2;
+  --text: var(--text-body);
+  --text-muted: #7fb4c4;
+  --focus-ring: #9ef4ff;
+
+  --board-bg: rgba(0, 10, 18, 0.55);
+  --board-grid: var(--acc-dark);
+  --board-label: var(--acc-dim);
+  --board-wall: var(--acc);
+  --board-wall-found: #ff9d6b;
+  --board-passage: #7fb4c4;
+  --board-entrance: var(--acc);
+  --board-exit: #cfe9f2;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: rgba(0, 24, 34, 0.75);
+}
+
+/* Player 2: lime. */
+:root[data-role="2"],
+:root[data-theme="xp-cyber"][data-role="2"] {
+  --acc: #d4ff00;
+  --acc-dim: #7a9900;
+  --acc-dark: #3b4600;
+  --bg: #0c0b00;
+  --hover: #262400;
+
+  --accent: var(--acc);
+  --bg-elevated: rgba(38, 36, 0, 0.55);
+  --surface: rgba(22, 21, 0, 0.55);
+  --border: var(--acc-dark);
+  --text-body: #eaf5cf;
+  --text: var(--text-body);
+  --text-muted: #b6c98a;
+  --focus-ring: #f0ff9e;
+
+  --board-bg: rgba(12, 11, 0, 0.55);
+  --board-grid: var(--acc-dark);
+  --board-label: var(--acc-dim);
+  --board-wall: var(--acc);
+  --board-wall-found: #ff9d6b;
+  --board-passage: #b6c98a;
+  --board-entrance: var(--acc);
+  --board-exit: #eaf5cf;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: rgba(28, 26, 0, 0.75);
+}
+
+/* ================================================================== dark ==
+   A quiet dark theme for playing rather than for sitting in a terminal: no
+   scan lines, no vignette, no glow, no rain. */
+
+:root[data-theme="dark"] {
+  --radius: 3px;
+  --gap: 12px;
+  --font-display: ui-monospace, "Courier New", Consolas, "DejaVu Sans Mono", monospace;
+  --font-ui: var(--font-display);
+  --font-mono: var(--font-display);
+  --stroke-grid: 1;
+  --stroke-wall: 7;
+  /* No halo: the double stroke is a glow, and this theme has none. */
+  --stroke-wall-glow: 0;
+  --stroke-wall-found-glow: 0;
+  --stroke-passage: 4;
+
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: none;
+
+  --track-tight: 0.2px;
+  --track-wide: 1.4px;
+  --track-hero: 6px;
+
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
+  --rain-opacity: 0.12;
+
+  --ok: #74d68a;
+  --warn: #e0b453;
+  --error: #ef6f6f;
+  --accent-contrast: #14161a;
+}
+
+:root[data-theme="dark"][data-role="1"] {
+  --acc: #79b8ff;
+  --acc-dim: #6c7885;
+  --acc-dark: #333a44;
+  --bg: #14161a;
+  --hover: #262b33;
+
+  --accent: var(--acc);
+  --bg-elevated: #22262e;
+  --surface: #1b1e24;
+  --border: var(--acc-dark);
+  --text-body: #e6e9ee;
+  --text: var(--text-body);
+  --text-muted: #a3adba;
+  --focus-ring: #a8d4ff;
+
+  --board-bg: #14161a;
+  --board-grid: #2b313a;
+  --board-label: #8b95a2;
+  --board-wall: var(--acc);
+  --board-wall-found: #ffa06b;
+  --board-passage: #8e9bab;
+  --board-entrance: var(--acc);
+  --board-exit: #e6e9ee;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: #1b1e24;
+}
+
+:root[data-theme="dark"][data-role="2"] {
+  --acc: #8bd17c;
+  --acc-dim: #6c7885;
+  --acc-dark: #333a44;
+  --bg: #14161a;
+  --hover: #262b33;
+
+  --accent: var(--acc);
+  --bg-elevated: #22262e;
+  --surface: #1b1e24;
+  --border: var(--acc-dark);
+  --text-body: #e6e9ee;
+  --text: var(--text-body);
+  --text-muted: #a3adba;
+  --focus-ring: #b6e8aa;
+
+  --board-bg: #14161a;
+  --board-grid: #2b313a;
+  --board-label: #8b95a2;
+  --board-wall: var(--acc);
+  --board-wall-found: #ffa06b;
+  --board-passage: #8e9bab;
+  --board-entrance: var(--acc);
+  --board-exit: #e6e9ee;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: #1b1e24;
+}
+
+/* ================================================================= light ==
+   A real light theme, not an inverted cyberpunk one. Glow does not exist on a
+   light background - a shadow of the text colour only smudges it - so weight
+   and stroke width carry what the glow carried. */
+
+:root[data-theme="light"] {
+  --radius: 3px;
+  --gap: 12px;
+  --font-display: ui-monospace, "Courier New", Consolas, "DejaVu Sans Mono", monospace;
+  --font-ui: var(--font-display);
+  --font-mono: var(--font-display);
+  --stroke-grid: 1;
+  /* Thicker instead of glowing. */
+  --stroke-wall: 8;
+  --stroke-wall-glow: 0;
+  --stroke-wall-found-glow: 0;
+  --stroke-passage: 5;
+
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: none;
+
+  --track-tight: 0.2px;
+  --track-wide: 1.4px;
+  --track-hero: 6px;
+
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
+  --rain-opacity: 0.06;
+
+  --ok: #157347;
+  --warn: #8a5a00;
+  --error: #b02a2a;
+  --accent-contrast: #ffffff;
+}
+
+:root[data-theme="light"][data-role="1"] {
+  --acc: #0a4f8f;
+  --acc-dim: #6a727d;
+  --acc-dark: #c3c9d2;
+  --bg: #f4f5f7;
+  --hover: #e2e6ec;
+
+  --accent: var(--acc);
+  --bg-elevated: #eceef2;
+  --surface: #ffffff;
+  --border: var(--acc-dark);
+  --text-body: #14171c;
+  --text: var(--text-body);
+  --text-muted: #4c545f;
+  --focus-ring: #0a4f8f;
+
+  --board-bg: #ffffff;
+  --board-grid: #d5dae1;
+  --board-label: #5a626d;
+  --board-wall: var(--acc);
+  --board-wall-found: #7a2600;
+  --board-passage: #566069;
+  --board-entrance: var(--acc);
+  --board-exit: #14171c;
+  --board-token-me: var(--acc);
+  --board-token-opponent: #8a5a00;
+  --board-hover: var(--acc);
+  --board-unknown: #eceef2;
+}
+
+:root[data-theme="light"][data-role="2"] {
+  --acc: #6b4700;
+  --acc-dim: #6a727d;
+  --acc-dark: #c3c9d2;
+  --bg: #f4f5f7;
+  --hover: #ece5d8;
+
+  --accent: var(--acc);
+  --bg-elevated: #eceef2;
+  --surface: #ffffff;
+  --border: var(--acc-dark);
+  --text-body: #14171c;
+  --text: var(--text-body);
+  --text-muted: #4c545f;
+  --focus-ring: #6b4700;
+
+  --board-bg: #ffffff;
+  --board-grid: #d5dae1;
+  --board-label: #5a626d;
+  --board-wall: var(--acc);
+  --board-wall-found: #7a2600;
+  --board-passage: #566069;
+  --board-entrance: var(--acc);
+  --board-exit: #14171c;
+  --board-token-me: var(--acc);
+  --board-token-opponent: #0a4f8f;
+  --board-hover: var(--acc);
+  --board-unknown: #eceef2;
+}
+
+/* ================================================================= paper ==
+   Paper and printing ink: warm white, black type, and a board that looks
+   drawn in pencil. */
+
+:root[data-theme="paper"] {
+  --radius: 2px;
+  --gap: 12px;
+  --font-display: ui-monospace, "Courier New", Consolas, "DejaVu Sans Mono", monospace;
+  --font-ui: var(--font-display);
+  --font-mono: var(--font-display);
+  --stroke-grid: 1;
+  --stroke-wall: 8;
+  --stroke-wall-glow: 0;
+  --stroke-wall-found-glow: 0;
+  --stroke-passage: 5;
+
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: none;
+
+  --track-tight: 0.2px;
+  --track-wide: 1.6px;
+  --track-hero: 7px;
+
+  --scanline-opacity: 0;
+  --vignette-strength: 0;
+  --rain-opacity: 0.05;
+
+  --ok: #2f6b3a;
+  --warn: #8a6100;
+  --error: #a32626;
+  --accent-contrast: #f7f1e4;
+}
+
+:root[data-theme="paper"][data-role="1"] {
+  --acc: #1d3450;
+  --acc-dim: #7d7362;
+  --acc-dark: #c9bda3;
+  --bg: #efe7d7;
+  --hover: #e3d9c3;
+
+  --accent: var(--acc);
+  --bg-elevated: #e6dcc8;
+  --surface: #f7f1e4;
+  --border: var(--acc-dark);
+  --text-body: #1c1a16;
+  --text: var(--text-body);
+  --text-muted: #5c5548;
+  --focus-ring: #1d3450;
+
+  --board-bg: #f7f1e4;
+  --board-grid: #cec2a8;
+  --board-label: #6e6555;
+  --board-wall: #2b2a26;
+  --board-wall-found: #6b2104;
+  --board-passage: #6b6252;
+  --board-entrance: var(--acc);
+  --board-exit: #1c1a16;
+  --board-token-me: var(--acc);
+  --board-token-opponent: #8a6100;
+  --board-hover: var(--acc);
+  --board-unknown: #e6dcc8;
+}
+
+:root[data-theme="paper"][data-role="2"] {
+  --acc: #6b1a1a;
+  --acc-dim: #7d7362;
+  --acc-dark: #c9bda3;
+  --bg: #efe7d7;
+  --hover: #ecd9d3;
+
+  --accent: var(--acc);
+  --bg-elevated: #e6dcc8;
+  --surface: #f7f1e4;
+  --border: var(--acc-dark);
+  --text-body: #1c1a16;
+  --text: var(--text-body);
+  --text-muted: #5c5548;
+  --focus-ring: #6b1a1a;
+
+  --board-bg: #f7f1e4;
+  --board-grid: #cec2a8;
+  --board-label: #6e6555;
+  --board-wall: #2b2a26;
+  --board-wall-found: #6b2104;
+  --board-passage: #6b6252;
+  --board-entrance: var(--acc);
+  --board-exit: #1c1a16;
+  --board-token-me: var(--acc);
+  --board-token-opponent: #1d3450;
+  --board-hover: var(--acc);
+  --board-unknown: #e6dcc8;
+}
+
+/* ================================================================= amber ==
+   A monitor with one phosphor. The cathode ray dressing belongs here more than
+   anywhere: this is the theme it was invented for. Player 1 gets the amber
+   phosphor, Player 2 the green one - the two tubes that actually existed. */
+
+:root[data-theme="amber"] {
+  --radius: 0px;
+  --gap: 12px;
+  --font-display: ui-monospace, "Courier New", Consolas, "DejaVu Sans Mono", monospace;
+  --font-ui: var(--font-display);
+  --font-mono: var(--font-display);
+  --stroke-grid: 1;
+  --stroke-wall: 7;
+  --stroke-wall-glow: 20;
+  /* Narrower than the wall halo: a warm colour smears on this background, and
+     a found wall has to read as a line, not as a stain. */
+  --stroke-wall-found-glow: 10;
+  --stroke-passage: 4;
+
+  --glow-sm: 0 0 8px currentColor;
+  --glow-md: 0 0 14px currentColor;
+  --glow-lg: 0 0 18px currentColor;
+
+  --track-tight: 0.3px;
+  --track-wide: 2px;
+  --track-hero: 10px;
+
+  --scanline-opacity: 0.35;
+  --vignette-strength: 0.85;
+  --rain-opacity: 0.22;
+
+  --ok: #7dff8f;
+  --warn: #ffcf70;
+  --error: #ff8f8f;
+  --accent-contrast: #120c04;
+}
+
+:root[data-theme="amber"][data-role="1"] {
+  --acc: #ffb000;
+  --acc-dim: #a8742a;
+  --acc-dark: #3d2a08;
+  --bg: #120c04;
+  --hover: #2a1a06;
+
+  --accent: var(--acc);
+  --bg-elevated: rgba(46, 28, 6, 0.55);
+  --surface: rgba(30, 18, 4, 0.55);
+  --border: var(--acc-dark);
+  --text-body: #ffd9a0;
+  --text: var(--text-body);
+  --text-muted: #c39456;
+  --focus-ring: #ffd9a0;
+
+  --board-bg: rgba(18, 12, 4, 0.55);
+  --board-grid: var(--acc-dark);
+  --board-label: var(--acc-dim);
+  --board-wall: var(--acc);
+  --board-wall-found: #ff9d9d;
+  --board-passage: #c39456;
+  --board-entrance: var(--acc);
+  --board-exit: #ffd9a0;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: rgba(30, 18, 4, 0.75);
+}
+
+:root[data-theme="amber"][data-role="2"] {
+  --acc: #33ff66;
+  --acc-dim: #3faa5c;
+  --acc-dark: #0d3d1c;
+  --bg: #040f06;
+  --hover: #0a2612;
+
+  --accent: var(--acc);
+  --bg-elevated: rgba(10, 46, 22, 0.55);
+  --surface: rgba(6, 30, 14, 0.55);
+  --border: var(--acc-dark);
+  --text-body: #c8ffd6;
+  --text: var(--text-body);
+  --text-muted: #6cc487;
+  --focus-ring: #c8ffd6;
+
+  --board-bg: rgba(4, 15, 6, 0.55);
+  --board-grid: var(--acc-dark);
+  --board-label: var(--acc-dim);
+  --board-wall: var(--acc);
+  --board-wall-found: #ff9d9d;
+  --board-passage: #6cc487;
+  --board-entrance: var(--acc);
+  --board-exit: #c8ffd6;
+  --board-token-me: var(--acc);
+  --board-token-opponent: var(--warn);
+  --board-hover: var(--acc);
+  --board-unknown: rgba(6, 30, 14, 0.75);
+}
