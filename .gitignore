@@ -1,0 +1,35 @@
+# Dependencies. The only one is esbuild, and it is a dev dependency: the built
+# page carries no runtime code from anywhere.
+node_modules/
+
+# Outputs of runs. They are snapshots of a moment, not sources, and the test
+# log in particular is full of terminal escapes.
+test-output.txt
+roundtrip-output.txt
+*-output.txt
+
+# Reveal files. Each one holds the salt of a real game: publishing one would
+# hand away the very thing the commit protocol protects (SPEC 4.2).
+usogui-maze-reveal-*.txt
+*reveal*.txt
+
+# Fixtures and scratch copies made while working on the interface.
+fixture*.js
+fixture*.json
+preview-*.html
+
+# Working directories of the tools used on this project.
+.claude/
+.remember/
+
+# Editors and operating systems.
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# The built page is deliberately NOT ignored. The whole point of this project
+# is that one file can be downloaded and opened, so it belongs in the
+# repository even though it is generated.
